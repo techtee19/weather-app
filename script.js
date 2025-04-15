@@ -1,71 +1,156 @@
+"use strict";
+
 const apiKey = "78126b4353ba75897d3a21d99439c45b";
 const apiUrl =
   "https://api.openweathermap.org/data/2.5/weather?&units=metric&q=";
-
-// async function getWeather() {
-//   const res = await fetch(apiurl + `&appid=${apiKey}`);
-//   const data = await res.json();
-//   console.log(data);
-// }
-
-const weather = document.querySelector(".weather");
-const searchInput = document.querySelector(".search input");
+const searchInput = document.querySelector(".search-input");
 const searchBtn = document.querySelector(".search-btn");
-const weatherIcon = document.querySelector(".weather-icon");
-const tempElement = document.querySelector(".temp");
-const cityElement = document.querySelector(".city");
-const humidityElement = document.querySelector(".humidity");
-const windElement = document.querySelector(".wind"); // Updated to match CSS class
+const temperatureEl = document.querySelector(".temperature");
+const locationEl = document.querySelector(".location");
+const sunsetEl = document.querySelector(".sunset");
+const humidityEl = document
+  .querySelectorAll(".card")[0]
+  .querySelector("strong");
+const sunsetTimeEl = document
+  .querySelectorAll(".card")[1]
+  .querySelector("strong");
+const uvIndexEl = document.querySelectorAll(".card")[2].querySelector("strong");
+const sunriseEl = document.querySelectorAll(".card")[3].querySelector("strong");
+const rainfallEl = document.querySelector(".rainfall-box strong");
+const forecastEl = document.querySelector(".forecast");
 
-async function getWeather(city) {
+// Get weather by city name
+const getWeatherByCity = async (city) => {
   try {
-    // document.querySelector(".error").style.display = "none";
-    const response = await fetch(apiUrl + city + `&appid=${apiKey}`);
-    if (!response.ok) {
-      throw new Error("City not found");
-    }
-    const data = await response.json();
-    console.log(data);
+    const res = await fetch(apiUrl + city + `&appid=${apiKey}`);
 
-    // Update UI with weather data
-    tempElement.innerHTML = Math.round(data.main.temp) + "°C";
-    cityElement.innerHTML = data.name;
-    humidityElement.innerHTML = data.main.humidity + "%";
-    windElement.innerHTML = Math.round(data.wind.speed) + " km/h";
+    const data = await res.json();
+    if (data.cod !== 200) throw new Error(data.message);
 
-    if (data.weather[0].main === "Clouds") {
-      weatherIcon.src = "cloud.png";
-    } else if (data.weather[0].main === "Clear") {
-      weatherIcon.src = "clear.png";
-    } else if (data.weather[0].main === "Rain") {
-      weatherIcon.src = "rain.png";
-    } else if (data.weather[0].main === "Mist") {
-      weatherIcon.src = "mist.png";
-    } else if (data.weather[0].main === "Snow") {
-      weatherIcon.src = "snow.png";
-    } else {
-      weatherIcon.src = "default.png"; // Fallback icon
-    }
+    const {
+      name,
+      sys: { country },
+      coord: { lat, lon },
+    } = data;
 
-    weather.style.display = "block";
-  } catch (error) {
-    // Show error message
-    document.querySelector(".error").style.display = "block";
-    weather.style.display = "none";
+    getWeatherByCoords(lat, lon, `${name}, ${country}`);
+  } catch (err) {
+    alert("City not found or API error!");
+    console.error(err);
   }
-}
+};
 
-// Event listener for search button
+// Get weather by latitude and longitude
+const getWeatherByCoords = async (lat, lon, placeName = "") => {
+  try {
+    // Fetch current weather
+    const currentRes = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`
+    );
+    const currentData = await currentRes.json();
+
+    if (currentData.cod !== 200) throw new Error(currentData.message);
+
+    const {
+      main: { temp, humidity },
+      sys: { country, sunrise, sunset },
+      name,
+    } = currentData;
+
+    // Fetch 7-day forecast
+    const forecastRes = await fetch(
+      `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`
+    );
+    const forecastData = await forecastRes.json();
+
+    // Fill UI
+    const displayName = placeName || `${name}, ${country}`;
+    temperatureEl.textContent = `${Math.round(temp)}°C`;
+    locationEl.textContent = displayName;
+    sunsetEl.textContent = `Sunset time, ${getDayName()} ${formatTime(sunset)}`;
+    humidityEl.textContent = `${humidity}%`;
+    sunsetTimeEl.textContent = formatTime(sunset);
+    sunriseEl.textContent = formatTime(sunrise);
+    uvIndexEl.textContent = `N/A`; // UV Index requires One Call API, so mark as N/A
+    rainfallEl.textContent = "45mm"; // Placeholder or historical data if needed
+
+    displayForecastFromForecastAPI(forecastData);
+  } catch (err) {
+    console.error("Failed to fetch weather data:", err);
+  }
+};
+
+const displayForecastFromForecastAPI = (data) => {
+  forecastEl.innerHTML = "";
+  const days = ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"];
+  const daily = {};
+
+  data.list.forEach((item) => {
+    const date = new Date(item.dt * 1000);
+    const day = date.getDay();
+    if (!daily[day]) {
+      daily[day] = {
+        temp: Math.round(item.main.temp),
+        icon: item.weather[0].icon,
+      };
+    }
+  });
+
+  Object.entries(daily)
+    .slice(0, 7)
+    .forEach(([dayIndex, { temp, icon }]) => {
+      const dayEl = document.createElement("div");
+      const iconUrl = `https://openweathermap.org/img/wn/${icon}.png`;
+
+      dayEl.innerHTML = `
+      <p class="day">${days[dayIndex]}</p>
+      <img class="weather-icon" src="${iconUrl}" alt="" />
+      <p>${temp}°C</p>
+    `;
+      forecastEl.appendChild(dayEl);
+    });
+};
+
+const formatTime = (timestamp) => {
+  const date = new Date(timestamp * 1000);
+  return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+};
+
+const getDayName = () => {
+  const date = new Date();
+  return date.toLocaleDateString("en-US", { weekday: "long" });
+};
+
 searchBtn.addEventListener("click", () => {
-  getWeather(searchInput.value.trim());
+  const city = searchInput.value.trim();
+  if (city) getWeatherByCity(city);
 });
 
-// Event listener for Enter key in search input
-searchInput.addEventListener("keypress", (event) => {
-  if (event.key === "Enter") {
-    getWeather(searchInput.value.trim());
+searchInput.addEventListener("keypress", (e) => {
+  if (e.key === "Enter") {
+    const city = searchInput.value.trim();
+    if (city) getWeatherByCity(city);
   }
 });
 
-// Initial load with default city
-// getWeather();
+// On load: get user's location
+window.addEventListener("DOMContentLoaded", () => {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const { latitude, longitude } = pos.coords;
+        getWeatherByCoords(latitude, longitude);
+      },
+      (err) => {
+        console.warn(
+          "Geolocation error, falling back to default:",
+          err.message
+        );
+        getWeatherByCity("Telluride"); // fallback
+      }
+    );
+  } else {
+    console.warn("Geolocation not supported. Using default location.");
+    getWeatherByCity("Telluride");
+  }
+});

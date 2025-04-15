@@ -3,46 +3,124 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>weather app</title>
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
     <link rel="stylesheet" href="style.css" />
+    <link rel="shortcut icon" href="weather-app.png" type="image/x-icon" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script defer src="script.js"></script>
+    <title>Weatherly</title>
   </head>
   <body>
-    <div class="card">
-      <div class="search">
-        <input
-          type="text"
-          name=""
-          id=""
-          placeholder="Enter city name"
-          spellcheck="false"
-        />
-        <button class="search-btn">
-          <ion-icon name="search-outline"></ion-icon>
-        </button>
+    <div class="container">
+      <nav class="nav">
+        <h1 class="search-header">Weatherly</h1>
+        <div class="search-cont">
+          <div class="search">
+            <input
+              type="text"
+              class="search-input"
+              placeholder="Enter city name..."
+            />
+            <button class="search-btn">
+              <ion-icon class="search-outline" name="search-outline"></ion-icon>
+            </button>
+          </div>
+          <ion-icon class="menu-outline" name="menu-outline"></ion-icon>
+        </div>
+      </nav>
+      <div class="user-location"></div>
+      <div class="weather-main">
+        <div class="weather-header">
+          <div>
+            <h1 class="temperature">13°C</h1>
+            <p class="location">Telluride, CO, USA</p>
+          </div>
+          <div class="location-info">
+            <p class="sunset">Sunset time, Monday 7:00 PM</p>
+          </div>
+        </div>
       </div>
 
-      <div class="error">Invalid city name!</div>
-
-      <div class="weather" style="display: none">
-        <img src="rain.png" class="weather-icon" alt="" />
-        <h1 class="temp">31°C</h1>
-        <h2 class="city">New York</h2>
-
-        <div class="details">
-          <div class="col">
-            <img src="humidity.png" alt="humidity" />
-            <div>
-              <p class="humidity">50%</p>
-              <p>Humidity</p>
-            </div>
+      <div class="info-cards">
+        <div class="card">
+          <div>
+            <img class="card-icon" src="humidity.png" alt="" />
           </div>
-          <div class="col">
-            <img src="wind.png" alt="wind" />
-            <div>
-              <p class="wind">15km/hr</p>
-              <p>wind Speed</p>
+          <div>
+            <p>Humidity</p>
+            <p><strong>29%</strong></p>
+          </div>
+        </div>
+        <div class="card">
+          <div>
+            <img class="card-icon" src="sunset.png" alt="" />
+          </div>
+          <div>
+            <p>Sunset</p>
+            <p><strong>7:50 pm</strong></p>
+          </div>
+        </div>
+        <div class="card">
+          <div>
+            <img class="card-icon" src="uv.png" alt="" />
+          </div>
+          <div>
+            <p>UV Index</p>
+            <p><strong>0 out of 10</strong></p>
+          </div>
+        </div>
+        <div class="card">
+          <div>
+            <img class="card-icon" src="sunrise.png" alt="" />
+          </div>
+          <div>
+            <p>Sunrise</p>
+            <p><strong>6:35 am</strong></p>
+          </div>
+        </div>
+        <div class="card rainfall-box">
+          <p>Monthly Rainfall</p>
+          <p><strong>45mm</strong></p>
+          <small>This Year +17%</small>
+        </div>
+        <div class="chart-card">
+          <p>Temperature • Precipitation • Wind</p>
+          <div class="forecast">
+            <!-- <div>
+              <p class="day">MON</p>
+              <img class="weather-icon" src="cloud.png" alt="" />
+              <p>12°C</p>
             </div>
+            <div>
+              <p class="day">TUE</p>
+              <img class="weather-icon" src="sunny.png" alt="" />
+              <p>13°C</p>
+            </div>
+            <div>
+              <p class="day">WED</p>
+              <img class="weather-icon" src="day-cloudy.png" alt="" />
+              <p>9°C</p>
+            </div>
+            <div>
+              <p class="day">THU</p>
+              <img class="weather-icon" src="wind.png" alt="" />
+              <p>8°C</p>
+            </div>
+            <div>
+              <p class="day">FRI</p>
+              <img class="weather-icon" src="rain.png" alt="" />
+              <p>7°C</p>
+            </div>
+            <div>
+              <p class="day">SAT</p>
+              <img class="weather-icon" src="cloud.png" alt="" />
+              <p>10°C</p>
+            </div>
+            <div>
+              <p class="day">SUN</p>
+              <img class="weather-icon" src="day-cloudy.png" alt="" />
+              <p>11°C</p>
+            </div> -->
           </div>
         </div>
       </div>
