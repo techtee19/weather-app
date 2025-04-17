@@ -12,6 +12,10 @@
   </head>
   <body>
     <div class="container">
+      <div class="loading-overlay" id="loading">
+        <div class="spinner"></div>
+      </div>
+
       <nav class="nav">
         <h1 class="search-header">Weatherly</h1>
         <div class="search-cont">
@@ -21,11 +25,13 @@
               class="search-input"
               placeholder="Enter city name..."
             />
+
             <button class="search-btn">
               <ion-icon class="search-outline" name="search-outline"></ion-icon>
             </button>
           </div>
           <ion-icon class="menu-outline" name="menu-outline"></ion-icon>
+          <div class="autocomplete-list"></div>
         </div>
       </nav>
       <div class="user-location"></div>
@@ -86,7 +92,7 @@
         <div class="chart-card">
           <p>Temperature • Precipitation • Wind</p>
           <div class="forecast">
-            <!-- <div>
+            <!-- <div class= "border">
               <p class="day">MON</p>
               <img class="weather-icon" src="cloud.png" alt="" />
               <p>12°C</p>

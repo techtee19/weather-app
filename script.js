@@ -19,13 +19,17 @@ const sunriseEl = document.querySelectorAll(".card")[3].querySelector("strong");
 const rainfallEl = document.querySelector(".rainfall-box strong");
 const forecastEl = document.querySelector(".forecast");
 
+const autocompleteList = document.querySelector(".autocomplete-list");
+const geoApi = "https://api.openweathermap.org/geo/1.0/direct?q=";
+
 // Get weather by city name
 const getWeatherByCity = async (city) => {
+  showLoading();
   try {
     const res = await fetch(apiUrl + city + `&appid=${apiKey}`);
 
     const data = await res.json();
-    if (data.cod !== 200) throw new Error(data.message);
+    if (!data.cod) throw new Error(data.message);
 
     const {
       name,
@@ -37,19 +41,23 @@ const getWeatherByCity = async (city) => {
   } catch (err) {
     alert("City not found or API error!");
     console.error(err);
+  } finally {
+    hideLoading();
   }
 };
 
 // Get weather by latitude and longitude
 const getWeatherByCoords = async (lat, lon, placeName = "") => {
+  showLoading();
+  const minLoadingTime = new Promise((resolve) => setTimeout(resolve, 1000));
+
   try {
-    // Fetch current weather
     const currentRes = await fetch(
       `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`
     );
     const currentData = await currentRes.json();
 
-    if (currentData.cod !== 200) throw new Error(currentData.message);
+    if (!currentData.cod) throw new Error(currentData.message);
 
     const {
       main: { temp, humidity },
@@ -71,12 +79,15 @@ const getWeatherByCoords = async (lat, lon, placeName = "") => {
     humidityEl.textContent = `${humidity}%`;
     sunsetTimeEl.textContent = formatTime(sunset);
     sunriseEl.textContent = formatTime(sunrise);
-    uvIndexEl.textContent = `N/A`; // UV Index requires One Call API, so mark as N/A
-    rainfallEl.textContent = "45mm"; // Placeholder or historical data if needed
+    uvIndexEl.textContent = `N/A`;
+    rainfallEl.textContent = "45mm";
 
+    await minLoadingTime;
     displayForecastFromForecastAPI(forecastData);
   } catch (err) {
     console.error("Failed to fetch weather data:", err);
+  } finally {
+    hideLoading();
   }
 };
 
@@ -106,9 +117,48 @@ const displayForecastFromForecastAPI = (data) => {
       <p class="day">${days[dayIndex]}</p>
       <img class="weather-icon" src="${iconUrl}" alt="" />
       <p>${temp}°C</p>
+      <div class = "border">
+      </div>
     `;
       forecastEl.appendChild(dayEl);
     });
+};
+
+const fetchCitySuggestions = async (query) => {
+  try {
+    const res = await fetch(`${geoApi}${query}&limit=5&appid=${apiKey}`);
+    const data = await res.json();
+
+    autocompleteList.innerHTML = "";
+
+    if (!data || data.length === 0) {
+      autocompleteList.style.display = "none";
+      return;
+    }
+
+    data.forEach((location) => {
+      const item = document.createElement("div");
+      item.classList.add("autocomplete-item");
+      item.textContent = `${location.name}, ${location.country}`;
+
+      item.addEventListener("click", () => {
+        searchInput.value = `${location.name}`;
+        autocompleteList.innerHTML = "";
+        autocompleteList.style.display = "none";
+        getWeatherByCoords(
+          location.lat,
+          location.lon,
+          `${location.name}, ${location.country}`
+        );
+      });
+
+      autocompleteList.appendChild(item);
+    });
+
+    autocompleteList.style.display = "block";
+  } catch (err) {
+    console.error("Autocomplete fetch error:", err);
+  }
 };
 
 const formatTime = (timestamp) => {
@@ -126,12 +176,41 @@ searchBtn.addEventListener("click", () => {
   if (city) getWeatherByCity(city);
 });
 
+searchInput.addEventListener("input", () => {
+  const query = searchInput.value.trim();
+  if (query.length > 0) {
+    fetchCitySuggestions(query);
+  } else {
+    autocompleteList.style.display = "none";
+    autocompleteList.innerHTML = "";
+  }
+});
+
+// Hide suggestions if clicked outside
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".search-cont")) {
+    autocompleteList.style.display = "none";
+    autocompleteList.innerHTML = "";
+  }
+});
+
 searchInput.addEventListener("keypress", (e) => {
   if (e.key === "Enter") {
     const city = searchInput.value.trim();
     if (city) getWeatherByCity(city);
+    autocompleteList.style.display = "none";
+    autocompleteList.innerHTML = "";
   }
 });
+
+// loading state function
+function showLoading() {
+  document.getElementById("loading").style.display = "flex";
+}
+
+function hideLoading() {
+  document.getElementById("loading").style.display = "none";
+}
 
 // On load: get user's location
 window.addEventListener("DOMContentLoaded", () => {
@@ -151,6 +230,6 @@ window.addEventListener("DOMContentLoaded", () => {
     );
   } else {
     console.warn("Geolocation not supported. Using default location.");
-    getWeatherByCity("Telluride");
+    getWeatherByCity("Abuja");
   }
 });
